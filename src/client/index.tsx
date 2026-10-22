@@ -80,7 +80,7 @@ function createRpc(ctx: unknown): Rpc | undefined {
     const rpc = connection?.rpc;
     if (rpc === undefined || typeof rpc.call !== "function") return undefined;
     return (method, payload) =>
-      Promise.resolve(rpc.call!(rpc, "/api", "jjPanel", method, payload) as RpcResponse<unknown>);
+      Promise.resolve(rpc.call!("/api", `jjPanel/${method}`, { args: payload }) as RpcResponse<unknown>);
   } catch {
     return undefined;
   }
