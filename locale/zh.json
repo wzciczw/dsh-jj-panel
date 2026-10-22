@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Jujutsu 历史面板",
+    "description": "在 Web GUI 里以 jj 语义查看 change 图、change 详情与差异：直接读取 jj，不经过 git。"
+  }
+}

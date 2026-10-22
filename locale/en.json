@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Jujutsu History Panel",
+    "description": "A jj-native change graph with change details and diffs in the DSH web GUI, read straight from jj instead of git."
+  }
+}

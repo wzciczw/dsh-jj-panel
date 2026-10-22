@@ -1,0 +1,78 @@
+{
+  "name": "dsh-jj-panel",
+  "version": "0.1.0",
+  "description": "Jujutsu (jj) history panel for the DeepSeek Harness web GUI: change graph, change details, changed files and diffs, jj-native.",
+  "type": "module",
+  "license": "MIT",
+  "author": "wzciczw",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wzciczw/dsh-jj-panel.git"
+  },
+  "homepage": "https://github.com/wzciczw/dsh-jj-panel#readme",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "jj",
+    "jujutsu",
+    "vcs",
+    "ui"
+  ],
+  "main": "./lib/host/index.js",
+  "types": "./lib/host/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/host/index.d.ts",
+      "default": "./lib/host/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/host",
+    "lib/client.js",
+    "locale",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.host.json --noEmit && tsc -p tsconfig.client.json --noEmit",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "slots",
+        "locale",
+        "connection"
+      ]
+    },
+    "compatibility": {
+      "dsh": ">=0.2.1-rc.2 <0.3.0"
+    }
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-typert-protocol": "^0.2.1-rc.2",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.9.0"
+  }
+}

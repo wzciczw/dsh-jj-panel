@@ -1,0 +1,8 @@
+# Bundle patch for `dsh-jj-panel`.
+#
+# One job: insert the host row so the harness mounts the `jjPanel` service.
+# The row `name` must equal the installed package name; the client half is
+# picked up from the package's `dsh.client` metadata and `./client` export.
+- insert:
+    - id: jj-panel
+      name: "dsh-jj-panel"
