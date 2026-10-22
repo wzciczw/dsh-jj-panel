@@ -32,6 +32,16 @@ dsh plugin --profile web add file:D:\path\to\dsh-jj-panel
 
 安装后打开会话视图里的 **Jujutsu** 标签页。host 半改动需要重启 DSH，浏览器半会热更新。
 
+### 插件市场源
+
+仓库自带 format-1 市场索引 [`market/index.json`](market/index.json)。在 **Plugins → Discover** 里把下面的地址加为 market source，即可安装索引中钉住的版本：
+
+```
+https://raw.githubusercontent.com/wzciczw/dsh-jj-panel/master/market/index.json
+```
+
+索引在测试中用 `@deepseek-ai/dsh-plugin-market-index` 校验。
+
 ## 配置
 
 ```yaml

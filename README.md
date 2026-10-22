@@ -34,6 +34,16 @@ dsh plugin --profile web add file:D:\path\to\dsh-jj-panel
 
 After installing, open the **Jujutsu** tab next to the other conversation views. Host-side changes need a DSH restart; the browser half hot-reloads.
 
+### Plugin market source
+
+This repository ships a format-1 market index at [`market/index.json`](market/index.json). Add this URL as a market source under **Plugins → Discover** to install the pinned version:
+
+```
+https://raw.githubusercontent.com/wzciczw/dsh-jj-panel/master/market/index.json
+```
+
+The index is validated against `@deepseek-ai/dsh-plugin-market-index` in the test suite.
+
 ## Configuration
 
 The plugin accepts an optional config block (profile `cordis.patch.yml` or the plugin settings page):

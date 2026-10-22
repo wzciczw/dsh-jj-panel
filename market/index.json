@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "title": {
+    "en": "dsh-jj-panel plugin source",
+    "zh": "dsh-jj-panel 插件源"
+  },
+  "plugins": [
+    {
+      "name": "dsh-jj-panel",
+      "title": {
+        "en": "Jujutsu History Panel",
+        "zh": "Jujutsu 历史面板"
+      },
+      "description": {
+        "en": "jj-native change graph, change details and diffs in the DSH web GUI.",
+        "zh": "在 DSH Web GUI 里以 jj 语义查看 change 图、change 详情与差异。"
+      },
+      "author": "wzciczw",
+      "homepage": "https://github.com/wzciczw/dsh-jj-panel#readme",
+      "repository": {
+        "url": "https://github.com/wzciczw/dsh-jj-panel"
+      },
+      "versions": [
+        {
+          "version": "0.1.0",
+          "publishTimestamp": 1792681649,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/wzciczw/dsh-jj-panel",
+            "commit": "ba78bc19cd4209a12636b287e02170219bc6ca1f"
+          },
+          "engines": {
+            "dsh": ">=0.2.1-rc.2 <0.3.0"
+          },
+          "commit": "2c27fe169eddfa8522c4c8ecb727518d481d2484"
+        }
+      ]
+    }
+  ]
+}
