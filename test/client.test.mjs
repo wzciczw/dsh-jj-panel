@@ -76,3 +76,32 @@ test("client: apply registers the conversation view and renders", () => {
   assert.match(html, />refresh</u);
   assert.match(html, />empty</u);
 });
+
+test("client: rpc calls use the gateway channel, endpoint and args.req envelope", async () => {
+  const mod = loadBundle();
+  const calls = [];
+  const ctx = {
+    get: (key) =>
+      key === "connection"
+        ? {
+            rpc: {
+              call: (...args) => {
+                calls.push(args);
+                return Promise.resolve({ ok: true, value: { ok: true, value: { commits: [] } } });
+              }
+            }
+          }
+        : undefined
+  };
+  const rpc = mod.createRpc(ctx);
+  assert.equal(typeof rpc, "function");
+  await rpc("log", { sessionId: "s", revset: "::@", limit: 5 });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], "/api");
+  assert.equal(calls[0][1], "jjPanel/log");
+  // Cross-realm objects from the vm bundle: compare structurally, not by prototype.
+  assert.equal(
+    JSON.stringify(calls[0][2]),
+    JSON.stringify({ args: { req: { sessionId: "s", revset: "::@", limit: 5 } } })
+  );
+});
