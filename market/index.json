@@ -22,17 +22,16 @@
       },
       "versions": [
         {
-          "version": "0.1.0",
-          "publishTimestamp": 1792681649,
+          "version": "0.2.0",
+          "publishTimestamp": 1792766456,
           "source": {
             "type": "git",
             "url": "https://github.com/wzciczw/dsh-jj-panel",
-            "commit": "ba78bc19cd4209a12636b287e02170219bc6ca1f"
+            "commit": "f97ba41a33b0831d35d96e9a4616aa26f7270d85"
           },
           "engines": {
             "dsh": ">=0.2.1-rc.2 <0.3.0"
-          },
-          "commit": "2c27fe169eddfa8522c4c8ecb727518d481d2484"
+          }
         }
       ]
     }
