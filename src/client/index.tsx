@@ -96,6 +96,7 @@ const STRINGS = {
     splitByFile: "按文件拆分",
     splitIntoNew: "拆分到新 change",
     splitOnlyCurrent: "只能拆分当前 @ change（拆分会在它下面新建 change 并移动工作副本）",
+    restartRequired: "host 半尚未加载：重启一次 DSH 后再试（浏览器半已热更新）",
     selectedFiles: "已选文件",
     close: "关闭",
     copied: "已复制",
@@ -147,6 +148,7 @@ const STRINGS = {
     splitByFile: "Split by file",
     splitIntoNew: "Split into new change",
     splitOnlyCurrent: "Only the current @ change can split (it creates a child and moves the working copy)",
+    restartRequired: "Host half not loaded yet: restart DSH once and retry (the browser half hot-reloaded)",
     selectedFiles: "Selected files",
     close: "Close",
     copied: "Copied",
@@ -782,9 +784,13 @@ export function Panel(props: { rpc?: Rpc; t: Translate; sessionId?: string }): R
       await reload();
       return true;
     } catch (cause) {
+      const message = cause instanceof Error ? cause.message : String(cause);
+      // A 404 here is the gateway saying the host half has no `op` yet: the
+      // browser half hot-reloaded but the host plugin still runs old code.
+      const needsRestart = /HTTP 404/u.test(message);
       setStatus({
         kind: "error",
-        text: `rpc: ${cause instanceof Error ? cause.message : String(cause)}`
+        text: needsRestart ? t("restartRequired") : `rpc: ${message}`
       });
       return false;
     } finally {

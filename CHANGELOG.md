@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- When the browser half hot-reloads before the host half, `jjPanel/op` returns
+  HTTP 404. The panel now shows a "restart DSH" hint instead of a raw transport
+  error, so the mismatch is actionable.
+
 ## 0.2.0
 
 VisualJJ-style structural editing.
