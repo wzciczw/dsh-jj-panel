@@ -11,6 +11,7 @@ test("market: index.json validates against the official format-1 validator", () 
   assert.equal(parsed.plugins.length, 1);
   const plugin = parsed.plugins[0];
   assert.equal(plugin.name, "dsh-jj-panel");
-  assert.equal(plugin.versions[0]?.version, "0.1.0");
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(plugin.versions[0]?.version, pkg.version);
   assert.equal(plugin.versions[0]?.source.type, "git");
 });
