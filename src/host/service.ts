@@ -1,6 +1,7 @@
 import { Remote, TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
 import { createRunner, resolveJjPath, type Runner } from "./jj.js";
 import { JjError, diff, log, show, snapshot } from "./queries.js";
+import { runOp, type OpParams } from "./ops.js";
 import { fail, ok, type JjDiffResult, type JjSnapshot, type JjShowResult, type RpcResult } from "./types.js";
 import { isSafeChange, isSafePath, isSafeRevset } from "./validate.js";
 
@@ -17,6 +18,9 @@ export interface JjPanelRequest {
   limit?: number;
   change?: string;
   path?: string;
+  action?: string;
+  confirm?: boolean;
+  params?: OpParams;
 }
 
 interface HostContext {
@@ -118,5 +122,20 @@ export class JjPanelService extends TypertRemoteService {
     if (!isSafeChange(change)) return fail("invalid-change", change);
     if (!isSafePath(path)) return fail("invalid-path", path);
     return this.withRepo(req, (root) => diff(this.runner, root, change, path));
+  }
+
+  @Remote("op")
+  async op(req: JjPanelRequest): Promise<RpcResult<{ action: string; stdout: string }>> {
+    const action = req.action ?? "";
+    if (action === "") return fail("invalid-action");
+    const result = await this.withRepo(req, (root) =>
+      runOp(this.runner, root, {
+        action,
+        ...(req.confirm === undefined ? {} : { confirm: req.confirm }),
+        ...(req.params === undefined ? {} : { params: req.params })
+      })
+    );
+    if (!result.ok) return result;
+    return ok({ action: result.value.action, stdout: result.value.stdout });
   }
 }

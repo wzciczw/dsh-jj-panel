@@ -23,7 +23,7 @@ const hasJj = detectJj();
 const integration = hasJj ? test : test.skip;
 
 function jjrun(args, cwd) {
-  execFileSync(jj, ["--no-pager", "--color=never", ...args], { cwd, encoding: "utf8" });
+  execFileSync(jj, ["--no-pager", "--color=never", ...args], { cwd, encoding: "utf8", timeout: 15000 });
 }
 
 /** Build a small real repository once: two described changes on top of a root. */
