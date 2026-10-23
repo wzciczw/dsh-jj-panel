@@ -12,6 +12,8 @@ export interface OpParams {
   paths?: string[];
   name?: string;
   subtree?: boolean;
+  /** rebase placement: child of the destination (default), or adjacent insertion. */
+  mode?: "onto" | "before" | "after";
 }
 
 export interface OpRequest {
@@ -22,7 +24,7 @@ export interface OpRequest {
 
 export interface OpResult {
   action: string;
-  argv: string[];
+  steps: string[][];
   stdout: string;
 }
 
@@ -60,124 +62,156 @@ function bookmark(value: unknown): string {
   return value;
 }
 
+function filesets(paths: unknown): string[] {
+  if (!Array.isArray(paths) || paths.length === 0) {
+    throw new JjError("invalid-path", "needs at least one path");
+  }
+  return paths.map((path) => {
+    if (typeof path !== "string" || path.startsWith("-") || !isSafePath(path)) {
+      throw new JjError("invalid-path", String(path));
+    }
+    return path;
+  });
+}
+
 /**
- * Build the argv for one structural operation. Pure: no spawning, no state, so
- * the client-facing allowlist can be unit-tested without a repository.
+ * Build the argv sequence for one structural operation. Pure: no spawning, no
+ * state, so the allowlist and every flag can be unit-tested without a repo.
  *
- * `confirm` is checked here as well as in the service, so a direct caller cannot
- * bypass the confirmation gate by calling the builder.
+ * Most actions are one step. `split` is a composite that creates an empty child
+ * of the current change, moves the selected paths into it with `jj squash`, and
+ * describes it; the service additionally checks that the target is `@`.
  */
-export function buildOpArgv(request: OpRequest): string[] {
+export function buildOpSteps(request: OpRequest): string[][] {
   const action = request.action;
   const params = request.params ?? {};
-  let argv: string[];
+  let steps: string[][];
   switch (action) {
     case "new": {
       const onto = rev(params.onto, "onto");
-      argv = ["new", onto];
-      if (params.message !== undefined) argv.push("-m", text(params.message, "message"));
+      const argv = ["new", onto];
+      if (params.message !== undefined) argv.push(`--message=${text(params.message, "message")}`);
+      steps = [argv];
       break;
     }
     case "edit":
-      argv = ["edit", change(params.change, "change")];
+      steps = [["edit", change(params.change, "change")]];
       break;
-    case "describe": {
-      const target = change(params.change, "change");
-      const message = text(params.message ?? "", "message");
-      argv = ["describe", "-r", target, "-m", message];
+    case "describe":
+      steps = [
+        [
+          "describe",
+          "-r",
+          change(params.change, "change"),
+          `--message=${text(params.message ?? "", "message")}`
+        ]
+      ];
       break;
-    }
     case "squash": {
       const from = change(params.from ?? params.change, "from");
       // -u keeps the destination description; without it jj opens an editor.
-      if (params.into === undefined) {
-        argv = ["squash", "-r", from, "-u"];
-      } else {
-        argv = ["squash", "--from", from, "--into", change(params.into, "into"), "-u"];
-      }
+      steps =
+        params.into === undefined
+          ? [["squash", "-r", from, "-u"]]
+          : [["squash", "--from", from, "--into", rev(params.into, "into"), "-u"]];
       break;
     }
     case "abandon": {
       const target = change(params.change, "change");
-      argv = ["abandon", params.subtree === true ? `${target}::` : target];
+      steps = [["abandon", params.subtree === true ? `${target}::` : target]];
       break;
     }
     case "duplicate": {
-      argv = ["duplicate", change(params.change, "change")];
+      const argv = ["duplicate", change(params.change, "change")];
       if (params.onto !== undefined) argv.push("--onto", rev(params.onto, "onto"));
+      steps = [argv];
       break;
     }
     case "revert": {
-      argv = [
-        "revert",
-        "-r",
-        change(params.change, "change"),
-        "--onto",
-        rev(params.destination ?? params.onto, "destination")
+      // Insert before @ so the revert change stays inside the visible `@` stack.
+      steps = [
+        [
+          "revert",
+          "-r",
+          change(params.change, "change"),
+          "--insert-before",
+          rev(params.destination ?? "@", "destination")
+        ]
       ];
       break;
     }
     case "rebase": {
-      argv = [
-        "rebase",
-        "-r",
-        change(params.change, "change"),
-        "--onto",
-        rev(params.destination ?? params.onto, "destination")
-      ];
+      const target = rev(params.destination ?? params.onto, "destination");
+      const flag =
+        params.mode === "before" ? "--insert-before" : params.mode === "after" ? "--insert-after" : "--onto";
+      steps = [["rebase", "-r", change(params.change, "change"), flag, target]];
       break;
     }
     case "split": {
-      const paths = params.paths;
-      if (!Array.isArray(paths) || paths.length === 0) {
-        throw new JjError("invalid-path", "split needs at least one path");
-      }
-      const safe = paths.map((path) => {
-        if (!isSafePath(path)) throw new JjError("invalid-path", path);
-        return path;
-      });
-      // -m keeps the split non-interactive; without it jj opens an editor.
-      argv = [
-        "split",
-        "-r",
-        change(params.change, "change"),
-        "-m",
-        text(params.message ?? "split", "message"),
-        ...safe
+      const paths = filesets(params.paths);
+      const message = text(params.message ?? "split", "message");
+      steps = [
+        ["new"],
+        ["squash", "--from", "@-", "--into", "@", "-u", "--", ...paths],
+        ["describe", "-r", "@", `--message=${message}`]
       ];
       break;
     }
     case "undo":
-      argv = ["undo"];
+      steps = [["undo"]];
       break;
     case "fetch":
-      argv = ["git", "fetch"];
+      steps = [["git", "fetch"]];
       break;
     case "bookmark":
-      argv = ["bookmark", "set", bookmark(params.name), "-r", rev(params.change, "change")];
+      steps = [["bookmark", "set", bookmark(params.name), "-r", rev(params.change, "change")]];
       break;
     case "push":
-      argv = ["git", "push", "--bookmark", bookmark(params.name)];
+      steps = [["git", "push", "--bookmark", bookmark(params.name)]];
       break;
     default:
       throw new JjError("unknown-action", action);
   }
   if (DESTRUCTIVE.has(action) && request.confirm !== true) {
-    throw new JjError("confirmation-required", argv.join(" "));
+    throw new JjError("confirmation-required", steps[0]?.join(" ") ?? action);
   }
-  return argv;
+  return steps;
+}
+
+/** First step of the plan; kept for callers that only need one argv. */
+export function buildOpArgv(request: OpRequest): string[] {
+  return buildOpSteps(request)[0] ?? [];
+}
+
+async function assertSplitTarget(runner: Runner, root: string, request: OpRequest): Promise<void> {
+  const target = request.params?.change ?? "";
+  if (target === "@") return;
+  const result = await runner.run(["log", "-r", "@", "--no-graph", "-T", "change_id.short(12)"], {
+    cwd: root
+  });
+  if (result.code !== 0) {
+    throw new JjError("jj-error", result.err.trim() || "cannot resolve @");
+  }
+  if (result.out.trim() !== target) {
+    throw new JjError("split-only-current", `split moves the working copy; select @ (${result.out.trim()})`);
+  }
 }
 
 /** Execute one structural operation through the shared runner. */
 export async function runOp(runner: Runner, root: string, request: OpRequest): Promise<OpResult> {
-  const argv = buildOpArgv(request);
-  const result = await runner.run(argv, { cwd: root });
-  if (result.code === -1 && /ENOENT/iu.test(result.err)) {
-    throw new JjError("jj-missing", "jj executable not found");
+  const steps = buildOpSteps(request);
+  if (request.action === "split") await assertSplitTarget(runner, root, request);
+  let stdout = "";
+  for (const argv of steps) {
+    const result = await runner.run(argv, { cwd: root });
+    if (result.code === -1 && /ENOENT/iu.test(result.err)) {
+      throw new JjError("jj-missing", "jj executable not found");
+    }
+    if (result.code !== 0) {
+      throw new JjError("jj-error", result.err.trim() || `jj exited ${String(result.code)}`);
+    }
+    if (result.truncated) throw new JjError("truncated", "jj output exceeded the configured cap");
+    if (result.out.trim() !== "") stdout = result.out;
   }
-  if (result.code !== 0) {
-    throw new JjError("jj-error", result.err.trim() || `jj exited ${String(result.code)}`);
-  }
-  if (result.truncated) throw new JjError("truncated", "jj output exceeded the configured cap");
-  return { action: request.action, argv, stdout: result.out };
+  return { action: request.action, steps, stdout };
 }

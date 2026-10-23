@@ -40,12 +40,12 @@ Our panel keeps the lane algorithm (already in `src/client/graph.ts`) and adds:
 | click = details, double-click = edit | select + `jj edit` |
 | New Change Here | `jj new <rev> -m …` |
 | drag change onto change = rebase | `jj rebase -r <src> --onto <dst>` |
-| Alt-drag = reorder | `jj rebase -r <src> --onto <parent-of-dst>` |
+| Alt-drag = reorder | `jj rebase -r <src> --insert-before <dst>` |
 | Squash popup | `jj squash --from <child> --into <parent>` |
 | Abandon / subtree abandon | `jj abandon <rev>` / `jj abandon '<rev>::'` |
 | Revert | `jj revert -r <rev> --onto <dest>` |
 | Duplicate | `jj duplicate <rev> --onto <dest>` |
-| Split by file | `jj split -r <rev> <paths>` |
+| Split by file | `jj new`; `jj squash --from @- --into @ -- <paths>`; `jj describe -r @` (current `@` only) |
 | Undo | `jj undo` |
 | Fetch / Rebase on main | `jj git fetch`, `jj rebase -r <rev> --onto <main>` |
 | Create/Update PR, CI status | out of scope; optional `gh` follow-up |
@@ -81,9 +81,9 @@ Actions and argv (verified against jj 0.46 help):
 | `squash` | `jj squash --from <child> --into <parent>` (or `-r <change>`) |
 | `abandon` | `jj abandon <change>` / subtree: `<change>::` |
 | `duplicate` | `jj duplicate <change> [--onto <dest>]` |
-| `revert` | `jj revert -r <change> --onto <dest>` |
+| `revert` | `jj revert -r <change> --insert-before @` |
 | `rebase` | `jj rebase -r <change> --onto <dest>` |
-| `split` | `jj split -r <change> <paths...>` |
+| `split` | `jj new`; `jj squash --from @- --into @ -- <paths>`; `jj describe -r @ -m …` |
 | `undo` | `jj undo` |
 | `fetch` | `jj git fetch` |
 | `bookmark` | `jj bookmark set <name> -r <change>` |

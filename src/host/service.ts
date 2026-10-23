@@ -77,9 +77,9 @@ export class JjPanelService extends TypertRemoteService {
       return ok(await work(rootOut.out.trim()));
     } catch (error) {
       if (error instanceof JjError) {
-        if (error.code === "jj-missing") return fail("jj-missing");
-        if (error.code === "truncated") return fail("truncated");
-        return fail("jj-error", error.message);
+        // Preserve actionable codes (confirmation-required, invalid-*, ...);
+        // only execution failures carry jj-error.
+        return fail(error.code, error.message);
       }
       return fail("jj-error", error instanceof Error ? error.message : String(error));
     }

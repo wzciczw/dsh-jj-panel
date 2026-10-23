@@ -11,4 +11,7 @@ test("host: Remote methods survive the Cordis receiver proxy", async () => {
   const result = await receiver.snapshot({});
   assert.equal(result.ok, false);
   assert.equal(result.error.code, "cwd-unavailable");
+  const opResult = await receiver.op({ action: "fetch" });
+  assert.equal(opResult.ok, false);
+  assert.equal(opResult.error.code, "cwd-unavailable");
 });

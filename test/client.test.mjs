@@ -75,6 +75,8 @@ test("client: apply registers the conversation view and renders", () => {
   assert.match(html, /placeholder="revset"/u);
   assert.match(html, />refresh</u);
   assert.match(html, />empty</u);
+  assert.match(html, />undo</u);
+  assert.match(html, />fetch</u);
 });
 
 test("client: rpc calls use the gateway channel, endpoint and args.req envelope", async () => {
